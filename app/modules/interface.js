@@ -1,8 +1,8 @@
 const { shell, app, Tray, Menu, powerMonitor, nativeTheme } = require( 'electron' )
-const { enable_battery_limiter, disable_battery_limiter, initialize_battery, is_limiter_enabled, get_battery_status, uninstall_battery } = require( './battery' )
+const { enable_battery_limiter, disable_battery_limiter, initialize_battery, is_limiter_enabled, get_battery_status, uninstall_battery, set_battery_charging } = require( './battery' )
 const { log } = require( "./helpers" )
 const { get_logo_template } = require( './theme' )
-const { get_force_discharge_setting, update_force_discharge_setting } = require( './settings' )
+const { get_force_discharge_setting, update_force_discharge_setting, get_maintain_percentage, set_maintain_percentage, get_charging_enabled } = require( './settings' )
 
 /* ///////////////////////////////
 // Menu helpers
@@ -27,17 +27,21 @@ const generate_app_menu = async () => {
         log( `Generate app menu percentage: ${ percentage } (discharge ${ allow_discharge ? 'allowed' : 'disallowed' }, limited ${ limiter_on ? 'on' : 'off' })` )
         tray.setImage( get_logo_template( percentage, limiter_on ) )
 
+        // Get current settings
+        const current_maintain_percentage = get_maintain_percentage()
+        const charging_enabled = get_charging_enabled()
+
         // Build menu
         return Menu.buildFromTemplate( [
 
             {
-                label: `Enable ${ maintain_percentage }% battery limit`,
+                label: `Enable ${ current_maintain_percentage }% battery limit`,
                 type: 'radio',
                 checked: limiter_on,
                 click: enable_limiter
             },
             {
-                label: `Disable ${ maintain_percentage }% battery limit`,
+                label: `Disable ${ current_maintain_percentage }% battery limit`,
                 type: 'radio',
                 checked: !limiter_on,
                 click: disable_limiter
@@ -57,8 +61,83 @@ const generate_app_menu = async () => {
                 type: 'separator'
             },
             {
+                label: `Battery charging: ${ charging_enabled ? 'ON' : 'OFF' }`,
+                type: 'checkbox',
+                checked: charging_enabled,
+                click: async () => {
+                    const success = await set_battery_charging( !charging_enabled )
+                    if( success ) await refresh_tray()
+                }
+            },
+            {
+                type: 'separator'
+            },
+            {
                 label: `Advanced settings`,
                 submenu: [
+                    {
+                        label: '50%',
+                        type: 'radio',
+                        checked: current_maintain_percentage === 50,
+                        click: async () => {
+                            set_maintain_percentage( 50 )
+                            if( limiter_on ) await restart_limiter()
+                            await refresh_tray()
+                        }
+                    },
+                    {
+                        label: '60%',
+                        type: 'radio',
+                        checked: current_maintain_percentage === 60,
+                        click: async () => {
+                            set_maintain_percentage( 60 )
+                            if( limiter_on ) await restart_limiter()
+                            await refresh_tray()
+                        }
+                    },
+                    {
+                        label: '70%',
+                        type: 'radio',
+                        checked: current_maintain_percentage === 70,
+                        click: async () => {
+                            set_maintain_percentage( 70 )
+                            if( limiter_on ) await restart_limiter()
+                            await refresh_tray()
+                        }
+                    },
+                    {
+                        label: '80%',
+                        type: 'radio',
+                        checked: current_maintain_percentage === 80,
+                        click: async () => {
+                            set_maintain_percentage( 80 )
+                            if( limiter_on ) await restart_limiter()
+                            await refresh_tray()
+                        }
+                    },
+                    {
+                        label: '90%',
+                        type: 'radio',
+                        checked: current_maintain_percentage === 90,
+                        click: async () => {
+                            set_maintain_percentage( 90 )
+                            if( limiter_on ) await restart_limiter()
+                            await refresh_tray()
+                        }
+                    },
+                    {
+                        label: '100%',
+                        type: 'radio',
+                        checked: current_maintain_percentage === 100,
+                        click: async () => {
+                            set_maintain_percentage( 100 )
+                            if( limiter_on ) await restart_limiter()
+                            await refresh_tray()
+                        }
+                    },
+                    {
+                        type: 'separator'
+                    },
                     {
                         label: `Allow force-discharging`,
                         type: 'checkbox',

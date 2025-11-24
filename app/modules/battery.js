@@ -2,7 +2,7 @@
 const { app } = require( 'electron' )
 const { exec } = require( 'node:child_process' )
 const { log, alert, wait, confirm } = require( './helpers' )
-const { get_force_discharge_setting } = require( './settings' )
+const { get_force_discharge_setting, get_maintain_percentage, set_charging_enabled } = require( './settings' )
 const { USER } = process.env
 const path_fix = 'PATH=/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'
 const battery = `${ path_fix } battery`
@@ -89,7 +89,8 @@ const enable_battery_limiter = async () => {
         // Start battery maintainer
         const status = await get_battery_status()
         const allow_force_discharge = get_force_discharge_setting()
-        await exec_async( `${ battery } maintain ${ status?.maintain_percentage || 80 }${ allow_force_discharge ? ' --force-discharge' : '' }` )
+        const maintain_percentage = get_maintain_percentage()
+        await exec_async( `${ battery } maintain ${ maintain_percentage }${ allow_force_discharge ? ' --force-discharge' : '' }` )
         log( `enable_battery_limiter exec complete` )
         return status?.percentage
     } catch ( e ) {
@@ -247,6 +248,23 @@ const is_limiter_enabled = async () => {
 
 }
 
+// Battery charging control
+const set_battery_charging = async ( enabled ) => {
+
+    try {
+        const command = enabled ? 'on' : 'off'
+        log( `Setting battery charging to ${ command }` )
+        await exec_async( `${ battery } charging ${ command }` )
+        set_charging_enabled( enabled )
+        return true
+    } catch ( e ) {
+        log( 'Error setting battery charging: ', e )
+        alert( e.message )
+        return false
+    }
+
+}
+
 
 module.exports = {
     enable_battery_limiter,
@@ -254,5 +272,6 @@ module.exports = {
     initialize_battery,
     is_limiter_enabled,
     get_battery_status,
-    uninstall_battery
+    uninstall_battery,
+    set_battery_charging
 }
