@@ -1,5 +1,5 @@
 const { shell, app, Tray, Menu, powerMonitor, nativeTheme } = require( 'electron' )
-const { enable_battery_limiter, disable_battery_limiter, initialize_battery, is_limiter_enabled, get_battery_status, uninstall_battery, set_battery_charging } = require( './battery' )
+const { enable_battery_limiter, disable_battery_limiter, initialize_battery, is_limiter_enabled, get_battery_status, uninstall_battery, set_battery_charging, start_battery_calibration, stop_battery_calibration, is_calibration_running } = require( './battery' )
 const { log } = require( "./helpers" )
 const { get_logo_template } = require( './theme' )
 const { get_force_discharge_setting, update_force_discharge_setting, get_maintain_percentage, set_maintain_percentage, get_charging_enabled } = require( './settings' )
@@ -20,11 +20,14 @@ const generate_app_menu = async () => {
         // Check if limiter is on
         const limiter_on = await is_limiter_enabled()
 
+        // Check if calibration is running
+        const calibration_running = await is_calibration_running()
+
         // Check force discharge setting
         const allow_discharge = get_force_discharge_setting()
 
         // Set tray icon
-        log( `Generate app menu percentage: ${ percentage } (discharge ${ allow_discharge ? 'allowed' : 'disallowed' }, limited ${ limiter_on ? 'on' : 'off' })` )
+        log( `Generate app menu percentage: ${ percentage } (discharge ${ allow_discharge ? 'allowed' : 'disallowed' }, limited ${ limiter_on ? 'on' : 'off' }, calibration ${ calibration_running ? 'running' : 'stopped' })` )
         tray.setImage( get_logo_template( percentage, limiter_on ) )
 
         // Get current settings
@@ -146,6 +149,37 @@ const generate_app_menu = async () => {
                             const success = await update_force_discharge_setting()
                             if( limiter_on && success ) await restart_limiter()
                         }
+                    },
+                    {
+                        type: 'separator'
+                    },
+                    {
+                        label: `Battery calibration: ${ calibration_running ? 'STOP' : 'START' }`,
+                        click: async () => {
+                            if( calibration_running ) {
+                                const success = await stop_battery_calibration()
+                                if( success ) await refresh_tray()
+                            } else {
+                                const { confirm } = require( './helpers' )
+                                const proceed = await confirm( `Battery calibration will:
+• Discharge your battery to 15%
+• Charge it to 100%
+• Keep it at 100% for 1 hour
+• Then return to your current maintenance level
+
+This process can take several hours. Make sure your laptop is plugged in.
+
+Start calibration?` )
+                                if( proceed ) {
+                                    const success = await start_battery_calibration()
+                                    if( success ) await refresh_tray()
+                                }
+                            }
+                        }
+                    },
+                    {
+                        label: `Calibration status: ${ calibration_running ? 'RUNNING' : 'STOPPED' }`,
+                        enabled: false
                     }
                 ]
             },

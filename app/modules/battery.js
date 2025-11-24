@@ -265,6 +265,48 @@ const set_battery_charging = async ( enabled ) => {
 
 }
 
+// Battery calibration control
+const start_battery_calibration = async () => {
+
+    try {
+        log( `Starting battery calibration` )
+        await exec_async( `${ battery } calibrate` )
+        return true
+    } catch ( e ) {
+        log( 'Error starting battery calibration: ', e )
+        alert( e.message )
+        return false
+    }
+
+}
+
+const stop_battery_calibration = async () => {
+
+    try {
+        log( `Stopping battery calibration` )
+        await exec_async( `${ battery } calibrate stop` )
+        return true
+    } catch ( e ) {
+        log( 'Error stopping battery calibration: ', e )
+        alert( e.message )
+        return false
+    }
+
+}
+
+const is_calibration_running = async () => {
+
+    try {
+        // Check if calibration pid file exists
+        const result = await exec_async( `test -f ~/.battery/calibrate.pid && echo "running" || echo "stopped"` )
+        return result.trim() === 'running'
+    } catch ( e ) {
+        log( 'Error checking calibration status: ', e )
+        return false
+    }
+
+}
+
 
 module.exports = {
     enable_battery_limiter,
@@ -273,5 +315,8 @@ module.exports = {
     is_limiter_enabled,
     get_battery_status,
     uninstall_battery,
-    set_battery_charging
+    set_battery_charging,
+    start_battery_calibration,
+    stop_battery_calibration,
+    is_calibration_running
 }
