@@ -64,18 +64,6 @@ const generate_app_menu = async () => {
                 type: 'separator'
             },
             {
-                label: `Battery charging: ${ charging_enabled ? 'ON' : 'OFF' }`,
-                type: 'checkbox',
-                checked: charging_enabled,
-                click: async () => {
-                    const success = await set_battery_charging( !charging_enabled )
-                    if( success ) await refresh_tray()
-                }
-            },
-            {
-                type: 'separator'
-            },
-            {
                 label: `Advanced settings`,
                 submenu: [
                     {
@@ -139,10 +127,19 @@ const generate_app_menu = async () => {
                         }
                     },
                     {
+                        label: `Battery charging: ${ charging_enabled ? 'ON' : 'OFF' }`,
+                        type: 'checkbox',
+                        checked: charging_enabled,
+                        click: async () => {
+                            const success = await set_battery_charging( !charging_enabled )
+                            if( success ) await refresh_tray()
+                        }
+                    },
+                    {
                         type: 'separator'
                     },
                     {
-                        label: `Allow force-discharging`,
+                        label: `Force-discharging`,
                         type: 'checkbox',
                         checked: allow_discharge,
                         click: async () => {
