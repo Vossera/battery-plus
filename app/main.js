@@ -13,14 +13,20 @@ require( 'update-electron-app' )( {
 // Event listeners
 // /////////////////////////////*/
 
-app.whenReady().then( set_initial_interface )
-
 /* ///////////////////////////////
 // Global config
 // /////////////////////////////*/
 
-// Hide dock entry
-app.dock.hide()
+// Show dock icon with default high-resolution icon
+if (app.dock) {
+  app.dock.show()
+}
+
+/* ///////////////////////////////
+// Event listeners
+// /////////////////////////////*/
+
+app.whenReady().then( set_initial_interface )
 
 /* ///////////////////////////////
 // Debugging
